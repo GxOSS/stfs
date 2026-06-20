@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <span>
 #include <variant>
+#include <vector>
 
 namespace stfs {
 
