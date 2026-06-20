@@ -3,10 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 
-/**
- * @file Endian.hpp
- * @brief Fixed-size endian reading utilities.
- */
 namespace stfs {
 
     [[nodiscard]] inline std::uint16_t readBE16(const std::byte* ptr) noexcept {
