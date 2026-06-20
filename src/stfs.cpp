@@ -1,40 +1,13 @@
 #include <array>
 #include <bit>
 #include <cstring>
+#include <endian.hpp>
 #include <fstream>
-#include <stfs/stfs.hpp>
+#include <stfs.hpp>
 
 namespace stfs {
 
     namespace {
-
-        std::uint16_t readBE16(const std::byte* ptr) {
-            return (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
-        }
-
-        std::uint32_t readBE32(const std::byte* ptr) {
-            return (static_cast<std::uint32_t>(ptr[0]) << 24) |
-                   (static_cast<std::uint32_t>(ptr[1]) << 16) |
-                   (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
-        }
-
-        std::uint64_t readBE64(const std::byte* ptr) {
-            std::uint64_t result = 0;
-            for (int i = 0; i < 8; ++i) {
-                result = (result << 8) | static_cast<std::uint64_t>(ptr[i]);
-            }
-            return result;
-        }
-
-        std::uint32_t readUInt24BE(const std::byte* ptr) {
-            return (static_cast<std::uint32_t>(ptr[0]) << 16) |
-                   (static_cast<std::uint32_t>(ptr[1]) << 8) | static_cast<std::uint32_t>(ptr[2]);
-        }
-
-        std::uint32_t readUInt24LE(const std::byte* ptr) {
-            return static_cast<std::uint32_t>(ptr[0]) | (static_cast<std::uint32_t>(ptr[1]) << 8) |
-                   (static_cast<std::uint32_t>(ptr[2]) << 16);
-        }
 
         std::u8string readLocaleString(const std::byte* ptr, std::size_t max_bytes) {
             const auto* char_ptr = reinterpret_cast<const char8_t*>(ptr);
