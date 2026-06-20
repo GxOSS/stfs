@@ -10,6 +10,8 @@ add_library(stfs
     src/FileTableParser.cpp
     src/HeaderParser.cpp
     src/MetadataParser.cpp
+    src/BlockParser.cpp
+    src/FileExtractor.cpp
 )
 
 target_include_directories(stfs PUBLIC
