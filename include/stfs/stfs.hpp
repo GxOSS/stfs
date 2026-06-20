@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <span>
 #include <string>
 #include <variant>
@@ -154,6 +155,25 @@ namespace stfs {
         std::vector<std::byte> title_thumbnail_image;
         std::optional<MetadataV2Extra> v2_extra;
     };
+
+    struct FileEntry {
+        std::string name;
+        std::uint8_t flags;
+        std::uint32_t blocks_allocated;
+        std::uint32_t blocks_allocated_copy;
+        std::uint32_t starting_block;
+        std::int16_t path_indicator;
+        std::uint32_t file_size;
+        std::uint32_t update_timestamp;
+        std::uint32_t access_timestamp;
+
+        bool isDirectory() const { return (flags & 0x80) == 0x80; }
+        bool isConsecutiveBlocks() const { return (flags & 0x40) == 0x40; }
+
+        std::uint8_t nameLength() const { return flags & 0x3F; }
+    };
+
+    std::vector<FileEntry> parseFileListing(std::span<const std::byte> data);
 
     Header parseHeader(std::span<const std::byte> data);
     Header readHeaderFromFile(const std::filesystem::path& path);
