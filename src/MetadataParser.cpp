@@ -1,8 +1,9 @@
+#include <Endian.hpp>
+#include <MetadataParser.hpp>
 #include <array>
 #include <bit>
 #include <cstring>
-#include <endian.hpp>
-#include <fstream>
+#include <stdexcept>
 #include <stfs.hpp>
 
 namespace stfs {
@@ -22,13 +23,8 @@ namespace stfs {
             StfsVolumeDescriptor vd;
             vd.size = static_cast<std::uint8_t>(ptr[0x00]);
             vd.block_separation = static_cast<std::uint8_t>(ptr[0x02]);
-            vd.file_table_block_count =
-                static_cast<std::int16_t>((static_cast<std::uint16_t>(ptr[0x03])) |
-                                          (static_cast<std::uint16_t>(ptr[0x04]) << 8));
-            vd.file_table_block_number =
-                static_cast<std::int32_t>(static_cast<std::uint32_t>(ptr[0x05]) |
-                                          (static_cast<std::uint32_t>(ptr[0x06]) << 8) |
-                                          (static_cast<std::uint32_t>(ptr[0x07]) << 16));
+            vd.file_table_block_count = static_cast<std::int16_t>(readLE16(ptr + 0x03));
+            vd.file_table_block_number = static_cast<std::int32_t>(readUInt24LE(ptr + 0x05));
             std::memcpy(vd.top_hash_table_hash.data(), ptr + 0x08, 0x14);
             vd.total_allocated_block_count = static_cast<std::int32_t>(readBE32(ptr + 0x1C));
             vd.total_unallocated_block_count = static_cast<std::int32_t>(readBE32(ptr + 0x20));
@@ -70,114 +66,7 @@ namespace stfs {
 
             return entries;
         }
-
     } // namespace
-
-    class HeaderParser {
-      public:
-        static Header parse(std::span<const std::byte> data) {
-            if (data.size() < 0x1AC) {
-                throw std::runtime_error("Insufficient data for header parsing");
-            }
-
-            Header header;
-            header.magic = parseMagic(data);
-
-            switch (header.magic) {
-                case Magic::CON:
-                    header.signature = parseConSignature(data);
-                    break;
-                case Magic::PIRS:
-                case Magic::LIVE:
-                    header.signature = parseLiveSignature(data);
-                    break;
-            }
-
-            return header;
-        }
-
-      private:
-        static Magic parseMagic(std::span<const std::byte> data) {
-            std::array<char, 4> magic_bytes;
-            std::memcpy(magic_bytes.data(), data.data(), 4);
-
-            if (magic_bytes[0] == 'C' && magic_bytes[1] == 'O' && magic_bytes[2] == 'N' &&
-                magic_bytes[3] == ' ') {
-                return Magic::CON;
-            } else if (magic_bytes[0] == 'P' && magic_bytes[1] == 'I' && magic_bytes[2] == 'R' &&
-                       magic_bytes[3] == 'S') {
-                return Magic::PIRS;
-            } else if (magic_bytes[0] == 'L' && magic_bytes[1] == 'I' && magic_bytes[2] == 'V' &&
-                       magic_bytes[3] == 'E') {
-                return Magic::LIVE;
-            }
-
-            throw std::runtime_error("Invalid magic bytes");
-        }
-
-        static ConSignature parseConSignature(std::span<const std::byte> data) {
-            ConSignature sig;
-
-            const auto* ptr = data.data();
-
-            sig.public_key_certificate_size = *reinterpret_cast<const std::uint16_t*>(ptr + 0x004);
-
-            std::memcpy(sig.certificate_owner_console_id.data(), ptr + 0x006, 5);
-
-            std::memcpy(sig.certificate_owner_console_part_number.data(), ptr + 0x00B, 0x14);
-
-            sig.certificate_owner_console_type =
-                *reinterpret_cast<const std::uint8_t*>(ptr + 0x01F);
-
-            std::memcpy(sig.certificate_date_of_generation.data(), ptr + 0x020, 8);
-
-            std::memcpy(sig.public_exponent.data(), ptr + 0x028, 4);
-
-            std::memcpy(sig.public_modulus.data(), ptr + 0x02C, 0x80);
-
-            std::memcpy(sig.certificate_signature.data(), ptr + 0x0AC, 0x100);
-
-            std::memcpy(sig.signature.data(), ptr + 0x1AC, 0x80);
-
-            return sig;
-        }
-
-        static LiveSignature parseLiveSignature(std::span<const std::byte> data) {
-            LiveSignature sig;
-
-            const auto* ptr = data.data();
-
-            std::memcpy(sig.package_signature.data(), ptr + 0x004, 0x100);
-
-            std::memcpy(sig.padding.data(), ptr + 0x104, 0x128);
-
-            return sig;
-        }
-    };
-
-    Header parseHeader(std::span<const std::byte> data) {
-        return HeaderParser::parse(data);
-    }
-
-    Header readHeaderFromFile(const std::filesystem::path& path) {
-        std::ifstream file(path, std::ios::binary);
-        if (!file) {
-            throw std::runtime_error("Cannot open file: " + path.string());
-        }
-
-        file.seekg(0, std::ios::end);
-        std::size_t file_size = file.tellg();
-        file.seekg(0, std::ios::beg);
-
-        if (file_size < 0x1AC) {
-            throw std::runtime_error("File too small for header");
-        }
-
-        std::vector<std::byte> buffer(0x1AC);
-        file.read(reinterpret_cast<char*>(buffer.data()), 0x1AC);
-
-        return HeaderParser::parse(buffer);
-    }
 
     Metadata parseMetadata(std::span<const std::byte> data) {
         if (data.size() < 0x571A + 0x4000) {
@@ -251,52 +140,4 @@ namespace stfs {
 
         return meta;
     }
-
-    std::vector<FileEntry> parseFileListing(std::span<const std::byte> data) {
-        std::vector<FileEntry> entries;
-        constexpr std::size_t entry_size = 0x40;
-
-        if (data.size() % entry_size != 0) {
-            throw std::runtime_error("File listing size not aligned to entry size");
-        }
-
-        std::size_t entry_count = data.size() / entry_size;
-        const auto* base = data.data();
-
-        for (std::size_t i = 0; i < entry_count; ++i) {
-            const auto* ptr = base + i * entry_size;
-
-            bool all_zero = true;
-            for (std::size_t b = 0; b < entry_size; ++b) {
-                if (ptr[b] != std::byte{0}) {
-                    all_zero = false;
-                    break;
-                }
-            }
-            if (all_zero) {
-                break;
-            }
-
-            FileEntry entry;
-
-            std::uint8_t flags = static_cast<std::uint8_t>(ptr[0x28]);
-            std::uint8_t name_length = flags & 0x3F;
-
-            entry.name.assign(reinterpret_cast<const char*>(ptr), name_length);
-            entry.flags = flags;
-
-            entry.blocks_allocated = readUInt24LE(ptr + 0x29);
-            entry.blocks_allocated_copy = readUInt24LE(ptr + 0x2C);
-            entry.starting_block = readUInt24LE(ptr + 0x2F);
-            entry.path_indicator = static_cast<std::int16_t>(readBE16(ptr + 0x32));
-            entry.file_size = readBE32(ptr + 0x34);
-            entry.update_timestamp = readBE32(ptr + 0x38);
-            entry.access_timestamp = readBE32(ptr + 0x3C);
-
-            entries.push_back(std::move(entry));
-        }
-
-        return entries;
-    }
-
 } // namespace stfs

@@ -23,6 +23,10 @@ namespace stfs {
         return result;
     }
 
+    [[nodiscard]] inline std::uint16_t readLE16(const std::byte* ptr) noexcept {
+        return static_cast<std::uint16_t>(ptr[0]) | (static_cast<std::uint16_t>(ptr[1]) << 8);
+    }
+
     [[nodiscard]] inline std::uint32_t readUInt24BE(const std::byte* ptr) noexcept {
         return (static_cast<std::uint32_t>(ptr[0]) << 16) |
                (static_cast<std::uint32_t>(ptr[1]) << 8) | static_cast<std::uint32_t>(ptr[2]);

@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(stfs
-    src/stfs.cpp
+    src/FileTableParser.cpp
+    src/HeaderParser.cpp
+    src/MetadataParser.cpp
 )
 
 target_include_directories(stfs PUBLIC
