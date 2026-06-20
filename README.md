@@ -1,2 +1,2 @@
 # stfs
-C++ STFS Tools
+C++ STFS Library
