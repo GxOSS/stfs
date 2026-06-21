@@ -46,13 +46,21 @@ namespace stfs {
         std::vector<std::uint32_t> chain;
         std::uint32_t current_block = starting_block;
 
+        std::uint32_t max_steps = static_cast<std::uint32_t>(package.size() / kBlockSize) + 1;
+        std::uint32_t steps = 0;
+
         while (current_block != kChainTerminator) {
+            if (steps >= max_steps) {
+                throw std::runtime_error("Block chain exceeded maximum possible length");
+            }
+
             chain.push_back(current_block);
 
             std::uint32_t hash_block = computeLevelNHashBlockNumber(current_block, 0);
             HashEntry hash_entry = readHashEntry(package, hash_block, current_block, header_size);
 
             current_block = hash_entry.next_block;
+            ++steps;
         }
 
         return chain;
