@@ -7,7 +7,6 @@
 #include <span>
 #include <vector>
 
-
 namespace stfs {
 
     [[nodiscard]] std::vector<std::uint32_t> followBlockChain(std::span<const std::byte> package,
@@ -15,7 +14,7 @@ namespace stfs {
                                                               std::uint32_t header_size);
 
     [[nodiscard]] std::vector<std::byte>
-    extractFile(std::span<const std::byte> package, const FileEntry& entry,
+    extractFile(std::span<const std::byte> package, const FileEntry& entry, Magic magic,
                 std::uint32_t header_size, bool verify = false,
                 const std::array<std::byte, 0x14>* top_hash = nullptr,
                 std::uint32_t total_blocks = 0);

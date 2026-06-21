@@ -77,9 +77,13 @@ namespace stfs {
     }
 
     std::vector<std::byte> extractFile(std::span<const std::byte> package, const FileEntry& entry,
-                                       std::uint32_t header_size, bool verify,
+                                       Magic magic, std::uint32_t header_size, bool verify,
                                        const std::array<std::byte, 0x14>* top_hash,
                                        std::uint32_t total_blocks) {
+        if (magic == Magic::CON) {
+            throw std::runtime_error("CON packages are not yet supported");
+        }
+
         if (verify && top_hash == nullptr) {
             throw std::runtime_error("Verification requested but no top_hash provided");
         }
@@ -117,11 +121,12 @@ namespace stfs {
         return result;
     }
 
-    void extractFileToDisk(std::span<const std::byte> package, const FileEntry& entry,
+    void extractFileToDisk(std::span<const std::byte> package, const FileEntry& entry, Magic magic,
                            std::uint32_t header_size, const std::filesystem::path& output_path,
-                           bool verify, const std::array<std::byte, 0x14>* top_hash,
-                           std::uint32_t total_blocks) {
-        auto data = extractFile(package, entry, header_size, verify, top_hash, total_blocks);
+                           bool verify = false,
+                           const std::array<std::byte, 0x14>* top_hash = nullptr,
+                           std::uint32_t total_blocks = 0) {
+        auto data = extractFile(package, entry, magic, header_size, verify, top_hash, total_blocks);
 
         std::ofstream out(output_path, std::ios::binary);
         if (!out) {
