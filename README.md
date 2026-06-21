@@ -7,3 +7,4 @@ Modern C++23 library designed to parse Xbox 360 Secure Transaction File System (
 - File listing parser
 - Block offset resolution and hash-table-aware block chain
 - File extraction ( Optional SHA-1 chain-of-trust verification )
+- Hash entry status validation
