@@ -2,9 +2,9 @@
 #include <Commons.hpp>
 #include <Endian.hpp>
 #include <FileExtractor.hpp>
+#include <HashVerifier.hpp>
 #include <fstream>
 #include <stdexcept>
-
 
 namespace stfs {
 
@@ -59,13 +59,25 @@ namespace stfs {
     }
 
     std::vector<std::byte> extractFile(std::span<const std::byte> package, const FileEntry& entry,
-                                       std::uint32_t header_size) {
+                                       std::uint32_t header_size, bool verify,
+                                       const std::array<std::byte, 0x14>* top_hash,
+                                       std::uint32_t total_blocks) {
+        if (verify && top_hash == nullptr) {
+            throw std::runtime_error("Verification requested but no top_hash provided");
+        }
+
         auto chain = followBlockChain(package, entry.starting_block, header_size);
 
         std::vector<std::byte> result;
         result.reserve(entry.file_size);
 
         for (std::uint32_t logical_block : chain) {
+            if (verify &&
+                !verifyDataBlock(package, logical_block, header_size, *top_hash, total_blocks)) {
+                throw std::runtime_error("Hash verification failed for block " +
+                                         std::to_string(logical_block) + " in file " + entry.name);
+            }
+
             std::uint32_t data_block = computeDataBlockNumber(logical_block);
             std::uint32_t offset = blockToOffset(data_block, header_size);
 
@@ -88,8 +100,10 @@ namespace stfs {
     }
 
     void extractFileToDisk(std::span<const std::byte> package, const FileEntry& entry,
-                           std::uint32_t header_size, const std::filesystem::path& output_path) {
-        auto data = extractFile(package, entry, header_size);
+                           std::uint32_t header_size, const std::filesystem::path& output_path,
+                           bool verify, const std::array<std::byte, 0x14>* top_hash,
+                           std::uint32_t total_blocks) {
+        auto data = extractFile(package, entry, header_size, verify, top_hash, total_blocks);
 
         std::ofstream out(output_path, std::ios::binary);
         if (!out) {
