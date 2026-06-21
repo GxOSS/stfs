@@ -12,6 +12,7 @@ add_library(stfs
     src/MetadataParser.cpp
     src/BlockParser.cpp
     src/FileExtractor.cpp
+    src/HashVerifier.cpp
 )
 
 target_include_directories(stfs PUBLIC
