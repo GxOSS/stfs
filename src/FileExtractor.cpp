@@ -35,6 +35,16 @@ namespace stfs {
             entry.status = static_cast<std::uint8_t>(ptr[0x14]);
             entry.next_block = readUInt24BE(ptr + 0x15);
 
+            constexpr std::uint8_t kStatusUsed = 0x80;
+            constexpr std::uint8_t kStatusNewlyAllocated = 0xC0;
+
+            if (entry.status != kStatusUsed && entry.status != kStatusNewlyAllocated) {
+                throw std::runtime_error("Block " + std::to_string(data_block) +
+                                         " has invalid hash entry status (0x" +
+                                         std::to_string(static_cast<int>(entry.status)) +
+                                         ") — expected used or newly allocated");
+            }
+
             return entry;
         }
 
