@@ -2,7 +2,6 @@
 #include <Commons.hpp>
 #include <stdexcept>
 
-
 namespace stfs {
 
     namespace {
@@ -52,11 +51,11 @@ namespace stfs {
         std::uint64_t base = (block + 0xAA) / 0xAA;
         std::uint64_t result = base + block;
 
-        if (block > 0xAA) {
+        if (block >= 0xAA) {
             base = (block + 0x70E4) / 0x70E4;
             result += base;
 
-            if (block > 0x70E4) {
+            if (block >= 0x70E4) {
                 base = (block + 0x4AF768) / 0x4AF768;
                 result += base;
             }
