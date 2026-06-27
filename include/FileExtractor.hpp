@@ -19,7 +19,7 @@ namespace stfs {
                 const std::array<std::byte, 0x14>* top_hash = nullptr,
                 std::uint32_t total_blocks = 0);
 
-    void extractFileToDisk(std::span<const std::byte> package, const FileEntry& entry,
+    void extractFileToDisk(std::span<const std::byte> package, const FileEntry& entry, Magic magic,
                            std::uint32_t header_size, const std::filesystem::path& output_path,
                            bool verify = false,
                            const std::array<std::byte, 0x14>* top_hash = nullptr,

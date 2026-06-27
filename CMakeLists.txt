@@ -13,8 +13,13 @@ add_library(stfs
     src/BlockParser.cpp
     src/FileExtractor.cpp
     src/HashVerifier.cpp
+    src/Package.cpp
 )
 
 target_include_directories(stfs PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_include_directories(stfs PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )

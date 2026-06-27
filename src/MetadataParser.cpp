@@ -6,7 +6,6 @@
 #include <cstring>
 #include <stdexcept>
 
-
 namespace stfs {
 
     namespace {

@@ -123,9 +123,8 @@ namespace stfs {
 
     void extractFileToDisk(std::span<const std::byte> package, const FileEntry& entry, Magic magic,
                            std::uint32_t header_size, const std::filesystem::path& output_path,
-                           bool verify = false,
-                           const std::array<std::byte, 0x14>* top_hash = nullptr,
-                           std::uint32_t total_blocks = 0) {
+                           bool verify, const std::array<std::byte, 0x14>* top_hash,
+                           std::uint32_t total_blocks) {
         auto data = extractFile(package, entry, magic, header_size, verify, top_hash, total_blocks);
 
         std::ofstream out(output_path, std::ios::binary);

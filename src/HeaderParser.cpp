@@ -5,7 +5,6 @@
 #include <fstream>
 #include <stdexcept>
 
-
 namespace stfs {
 
     namespace {

@@ -5,7 +5,6 @@
 #include <stdexcept>
 #include <vector>
 
-
 namespace stfs {
 
     std::vector<FileEntry> parseFileListing(std::span<const std::byte> data) {

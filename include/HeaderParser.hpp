@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <span>
 
-
 namespace stfs {
 
     [[nodiscard]] Header parseHeader(std::span<const std::byte> data);

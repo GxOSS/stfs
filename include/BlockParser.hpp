@@ -3,7 +3,6 @@
 #include <Commons.hpp>
 #include <cstdint>
 
-
 namespace stfs {
 
     [[nodiscard]] std::uint32_t blockToOffset(std::uint32_t block, std::uint32_t header_size);
